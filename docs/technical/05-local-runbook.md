@@ -1,0 +1,108 @@
+# 本地运行手册
+
+## 环境要求
+
+- Node.js 18+，建议 Node.js 24。
+- 不需要 npm install，因为当前 MVP 不依赖第三方包。
+
+## 启动步骤
+
+复制配置：
+
+```bash
+cp config.example.json config.json
+```
+
+修改 `config.json`：
+
+```json
+{
+  "providers": [
+    {
+      "id": "openrouter",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKey": "替换成你的上游 API Key"
+    }
+  ]
+}
+```
+
+启动：
+
+```bash
+node apps/server/src/server.js
+```
+
+访问：
+
+```text
+http://127.0.0.1:8787
+```
+
+## 请求示例
+
+```bash
+curl http://127.0.0.1:8787/v1/chat/completions \
+  -H "Authorization: Bearer asg_demo_local_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "messages": [
+      { "role": "user", "content": "hello" }
+    ]
+  }'
+```
+
+## 预算测试
+
+在 `config.json` 中把项目每日预算调低：
+
+```json
+{
+  "dailyBudgetUsd": 0
+}
+```
+
+再次请求时应返回：
+
+```json
+{
+  "error": {
+    "message": "Project budget exceeded",
+    "type": "budget_exceeded",
+    "code": "daily_budget_exceeded"
+  }
+}
+```
+
+HTTP 状态码为 `402`。
+
+## 数据文件
+
+```text
+data/usage-records.jsonl
+data/budget-events.jsonl
+```
+
+当前只记录元数据，不保存 prompt 和模型输出。
+
+## 无真实 Key 的 smoke test
+
+如果你没有 OpenRouter/OpenAI Key，可以使用内置 mock provider 测试完整链路：
+
+```bash
+node scripts/smoke-test.mjs
+```
+
+测试内容：
+
+- 启动 mock provider：`http://127.0.0.1:8788`
+- 启动 AgentSpendGuard：`http://127.0.0.1:8787`
+- 发送一次 `/v1/chat/completions`
+- 检查 Dashboard summary
+- 使用 0 预算配置验证 `402` 熔断
+
+注意：
+
+- 测试脚本会临时写入 `config.json`。
+- 如果已有 `config.json`，脚本会备份并在结束后恢复。

@@ -1,0 +1,175 @@
+import { appendUsage } from "./store.js";
+import { checkBudget, findVirtualKey, resolveProject, resolveProvider } from "./budget.js";
+import { estimateCostUsd, estimateRequestTokens, extractUsage } from "./metering.js";
+import { readJsonBody, sendJson } from "./http.js";
+
+export async function handleChatCompletions(req, res, config) {
+  const startedAt = Date.now();
+  const virtualKey = findVirtualKey(config, req.headers.authorization);
+  if (!virtualKey) {
+    return sendJson(res, 401, {
+      error: {
+        message: "Invalid AgentSpendGuard virtual key",
+        type: "auth_error",
+        code: "invalid_virtual_key"
+      }
+    });
+  }
+
+  const project = resolveProject(config, virtualKey);
+  if (!project) {
+    return sendJson(res, 403, {
+      error: {
+        message: "Project disabled or not found",
+        type: "project_error",
+        code: "project_disabled"
+      }
+    });
+  }
+
+  const provider = resolveProvider(config, project);
+  if (!provider) {
+    return sendJson(res, 503, {
+      error: {
+        message: "Provider disabled or not found",
+        type: "provider_error",
+        code: "provider_disabled"
+      }
+    });
+  }
+
+  const budget = checkBudget(project, virtualKey);
+  if (!budget.allowed) {
+    return sendJson(res, 402, {
+      error: {
+        message: "Project budget exceeded",
+        type: "budget_exceeded",
+        code: budget.event.eventType
+      }
+    });
+  }
+
+  let requestJson;
+  try {
+    requestJson = await readJsonBody(req);
+  } catch {
+    return sendJson(res, 400, {
+      error: {
+        message: "Invalid JSON body",
+        type: "bad_request",
+        code: "invalid_json"
+      }
+    });
+  }
+
+  const upstreamUrl = `${provider.baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  const model = requestJson.model || "unknown";
+
+  try {
+    const upstream = await fetch(upstreamUrl, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${provider.apiKey}`
+      },
+      body: JSON.stringify(requestJson)
+    });
+
+    const contentType = upstream.headers.get("content-type") || "application/json";
+    res.writeHead(upstream.status, {
+      "content-type": contentType,
+      "cache-control": "no-store"
+    });
+
+    if (requestJson.stream) {
+      await pipeStream(upstream, res);
+      recordUsage(config, {
+        project,
+        virtualKey,
+        provider,
+        model,
+        statusCode: upstream.status,
+        latencyMs: Date.now() - startedAt,
+        inputTokens: estimateRequestTokens(requestJson),
+        outputTokens: 0,
+        stream: true
+      });
+      return;
+    }
+
+    const raw = await upstream.text();
+    res.end(raw);
+
+    let responseJson = {};
+    try {
+      responseJson = JSON.parse(raw);
+    } catch {
+      responseJson = {};
+    }
+    const usage = extractUsage(responseJson);
+    recordUsage(config, {
+      project,
+      virtualKey,
+      provider,
+      model,
+      statusCode: upstream.status,
+      latencyMs: Date.now() - startedAt,
+      inputTokens: usage.inputTokens || estimateRequestTokens(requestJson),
+      outputTokens: usage.outputTokens,
+      stream: false
+    });
+  } catch (error) {
+    recordUsage(config, {
+      project,
+      virtualKey,
+      provider,
+      model,
+      statusCode: 502,
+      latencyMs: Date.now() - startedAt,
+      inputTokens: estimateRequestTokens(requestJson),
+      outputTokens: 0,
+      stream: Boolean(requestJson.stream),
+      errorCode: "upstream_error"
+    });
+    return sendJson(res, 502, {
+      error: {
+        message: error.message,
+        type: "upstream_error",
+        code: "upstream_error"
+      }
+    });
+  }
+}
+
+async function pipeStream(upstream, res) {
+  if (!upstream.body) {
+    res.end();
+    return;
+  }
+  for await (const chunk of upstream.body) {
+    res.write(chunk);
+  }
+  res.end();
+}
+
+function recordUsage(config, data) {
+  const estimatedCostUsd = estimateCostUsd(config, data.model, data.inputTokens, data.outputTokens);
+  appendUsage({
+    id: crypto.randomUUID(),
+    projectId: data.project.id,
+    virtualKeyId: data.virtualKey.id,
+    providerId: data.provider.id,
+    providerType: data.provider.type,
+    model: data.model,
+    requestType: "chat.completions",
+    inputTokens: data.inputTokens,
+    outputTokens: data.outputTokens,
+    estimatedCostUsd,
+    latencyMs: data.latencyMs,
+    statusCode: data.statusCode,
+    errorCode: data.errorCode || "",
+    stream: data.stream,
+    createdAt: new Date().toISOString()
+  });
+}
+

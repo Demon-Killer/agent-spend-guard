@@ -1,0 +1,14 @@
+services:
+  agent-spend-guard:
+    image: agent-spend-guard:local
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8787:8787"
+    volumes:
+      - agent-spend-guard-data:/app/data
+      - ../config.json:/app/config.json:ro
+
+volumes:
+  agent-spend-guard-data:

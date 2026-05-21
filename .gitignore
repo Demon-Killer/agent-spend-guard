@@ -1,0 +1,34 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Build
+dist/
+build/
+tmp/
+out/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Local database
+*.db
+*.sqlite
+*.sqlite3
+data/
+config.json
+config.json.smoke-backup

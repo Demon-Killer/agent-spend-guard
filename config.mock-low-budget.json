@@ -1,0 +1,48 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8787
+  },
+  "providers": [
+    {
+      "id": "mock",
+      "name": "Mock Provider",
+      "type": "openai-compatible",
+      "baseUrl": "http://127.0.0.1:8788/v1",
+      "apiKey": "mock-provider-key",
+      "enabled": true
+    }
+  ],
+  "projects": [
+    {
+      "id": "demo",
+      "name": "Demo Project",
+      "providerId": "mock",
+      "dailyBudgetUsd": 0,
+      "monthlyBudgetUsd": 0,
+      "enabled": true
+    }
+  ],
+  "virtualKeys": [
+    {
+      "id": "demo-key",
+      "projectId": "demo",
+      "name": "Demo Virtual Key",
+      "key": "asg_demo_local_key",
+      "enabled": true
+    }
+  ],
+  "modelPrices": [
+    {
+      "model": "mock-model",
+      "inputPricePer1MTokens": 1000,
+      "outputPricePer1MTokens": 1000
+    },
+    {
+      "model": "default",
+      "inputPricePer1MTokens": 1,
+      "outputPricePer1MTokens": 3
+    }
+  ]
+}
+
