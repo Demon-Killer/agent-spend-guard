@@ -20,6 +20,7 @@
       "providerId": "openrouter",
       "dailyBudgetUsd": 1,
       "monthlyBudgetUsd": 10,
+      "maxRequestsPerMinute": 30,
       "enabled": true
     }
   ],
@@ -40,4 +41,3 @@
     }
   ]
 }
-

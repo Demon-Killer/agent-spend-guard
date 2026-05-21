@@ -24,6 +24,7 @@ id
 name
 daily_budget_usd
 monthly_budget_usd
+max_requests_per_minute
 enabled
 created_at
 updated_at
@@ -114,4 +115,3 @@ MVP 默认：
 - 只保存用量元数据。
 
 这不仅是隐私措施，也是产品卖点。
-

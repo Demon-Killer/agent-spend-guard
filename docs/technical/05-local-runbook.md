@@ -77,6 +77,36 @@ curl http://127.0.0.1:8787/v1/chat/completions \
 
 HTTP 状态码为 `402`。
 
+## 请求频率限制测试
+
+项目配置支持：
+
+```json
+{
+  "maxRequestsPerMinute": 30
+}
+```
+
+含义：
+
+> 当前项目最近 60 秒最多允许 30 次请求。
+
+超过后返回：
+
+```json
+{
+  "error": {
+    "message": "Project request rate exceeded",
+    "type": "rate_limit_exceeded",
+    "code": "request_rate_exceeded"
+  }
+}
+```
+
+HTTP 状态码为 `429`。
+
+这个能力用于防止 AI Agent 因循环或隐藏重试在短时间内连续调用模型。
+
 ## 数据文件
 
 ```text
@@ -101,6 +131,7 @@ node scripts/smoke-test.mjs
 - 发送一次 `/v1/chat/completions`
 - 检查 Dashboard summary
 - 使用 0 预算配置验证 `402` 熔断
+- 使用低请求频率配置验证 `429` 限流
 
 注意：
 

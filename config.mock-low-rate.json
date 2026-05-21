@@ -18,9 +18,9 @@
       "id": "demo",
       "name": "Demo Project",
       "providerId": "mock",
-      "dailyBudgetUsd": 0,
-      "monthlyBudgetUsd": 0,
-      "maxRequestsPerMinute": 30,
+      "dailyBudgetUsd": 10,
+      "monthlyBudgetUsd": 100,
+      "maxRequestsPerMinute": 1,
       "enabled": true
     }
   ],
@@ -46,3 +46,4 @@
     }
   ]
 }
+

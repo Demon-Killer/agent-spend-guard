@@ -70,6 +70,30 @@ export function checkBudget(project, virtualKey) {
   return { allowed: true, summary };
 }
 
+export function checkRequestRate(project, virtualKey) {
+  const limit = Number(project.maxRequestsPerMinute || 0);
+  if (!limit) {
+    return { allowed: true, currentValue: 0, limit };
+  }
+
+  const since = Date.now() - 60_000;
+  const currentValue = readUsageRecords().filter((record) => {
+    if (record.projectId !== project.id) {
+      return false;
+    }
+    const createdAt = Date.parse(record.createdAt || "");
+    return Number.isFinite(createdAt) && createdAt >= since;
+  }).length;
+
+  if (currentValue >= limit) {
+    const event = createBudgetEvent(project, virtualKey, "request_rate_exceeded", limit, currentValue);
+    appendEvent(event);
+    return { allowed: false, event, currentValue, limit };
+  }
+
+  return { allowed: true, currentValue, limit };
+}
+
 function createBudgetEvent(project, virtualKey, eventType, limitValueUsd, currentValueUsd) {
   return {
     id: crypto.randomUUID(),
@@ -86,4 +110,3 @@ function createBudgetEvent(project, virtualKey, eventType, limitValueUsd, curren
 function formatDateKey(date) {
   return date.toISOString().slice(0, 10);
 }
-

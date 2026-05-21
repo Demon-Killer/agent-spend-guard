@@ -34,6 +34,18 @@
 - `429 Too Many Requests`：限流。
 - `401 Unauthorized`：虚拟 Key 无效。
 
+限流响应：
+
+```json
+{
+  "error": {
+    "message": "Project request rate exceeded",
+    "type": "rate_limit_exceeded",
+    "code": "request_rate_exceeded"
+  }
+}
+```
+
 ## Dashboard API
 
 ### GET /api/dashboard/summary
@@ -93,4 +105,3 @@
 ### GET /api/events
 
 查询预算和熔断事件。
-

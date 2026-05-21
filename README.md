@@ -106,6 +106,7 @@ node scripts/smoke-test.mjs
 - 用量会写入本地记录。
 - Dashboard summary 能统计请求和费用。
 - 预算为 0 时会返回 `402`。
+- 每分钟请求数超限时会返回 `429`。
 
 脚本会临时创建 `config.json`，如果你已有本地配置，会先备份为 `config.json.smoke-backup`，结束后恢复。
 

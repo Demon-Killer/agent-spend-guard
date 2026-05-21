@@ -1,5 +1,5 @@
 import { appendUsage } from "./store.js";
-import { checkBudget, findVirtualKey, resolveProject, resolveProvider } from "./budget.js";
+import { checkBudget, checkRequestRate, findVirtualKey, resolveProject, resolveProvider } from "./budget.js";
 import { estimateCostUsd, estimateRequestTokens, extractUsage } from "./metering.js";
 import { readJsonBody, sendJson } from "./http.js";
 
@@ -45,6 +45,17 @@ export async function handleChatCompletions(req, res, config) {
         message: "Project budget exceeded",
         type: "budget_exceeded",
         code: budget.event.eventType
+      }
+    });
+  }
+
+  const requestRate = checkRequestRate(project, virtualKey);
+  if (!requestRate.allowed) {
+    return sendJson(res, 429, {
+      error: {
+        message: "Project request rate exceeded",
+        type: "rate_limit_exceeded",
+        code: requestRate.event.eventType
       }
     });
   }
@@ -172,4 +183,3 @@ function recordUsage(config, data) {
     createdAt: new Date().toISOString()
   });
 }
-

@@ -20,6 +20,7 @@ export function dashboardHtml() {
     th, td { padding: 10px 12px; border-bottom: 1px solid #eef0f3; text-align: left; font-size: 13px; }
     th { color: #4b5563; background: #fafafa; }
     code { background: #eef0f3; padding: 2px 5px; border-radius: 4px; }
+    h2 { margin-top: 28px; }
     @media (max-width: 760px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   </style>
 </head>
@@ -32,6 +33,11 @@ export function dashboardHtml() {
     <table>
       <thead><tr><th>时间</th><th>项目</th><th>模型</th><th>费用</th><th>状态</th><th>延迟</th></tr></thead>
       <tbody id="usage"></tbody>
+    </table>
+    <h2>最近事件</h2>
+    <table>
+      <thead><tr><th>时间</th><th>项目</th><th>类型</th><th>当前值</th><th>限制值</th></tr></thead>
+      <tbody id="events"></tbody>
     </table>
   </main>
   <script>
@@ -48,6 +54,11 @@ export function dashboardHtml() {
       const usage = await fetch("/api/usage").then(r => r.json());
       document.getElementById("usage").innerHTML = usage.records.slice(0, 50).map((r) =>
         "<tr><td>" + r.createdAt + "</td><td>" + r.projectId + "</td><td><code>" + r.model + "</code></td><td>" + money(r.estimatedCostUsd) + "</td><td>" + r.statusCode + "</td><td>" + r.latencyMs + "ms</td></tr>"
+      ).join("");
+
+      const events = await fetch("/api/events").then(r => r.json());
+      document.getElementById("events").innerHTML = events.records.slice(0, 20).map((r) =>
+        "<tr><td>" + r.createdAt + "</td><td>" + r.projectId + "</td><td><code>" + r.eventType + "</code></td><td>" + r.currentValueUsd + "</td><td>" + r.limitValueUsd + "</td></tr>"
       ).join("");
     }
     load();
@@ -90,4 +101,3 @@ export function dashboardSummary(config) {
     eventCount: readBudgetEvents().length
   };
 }
-

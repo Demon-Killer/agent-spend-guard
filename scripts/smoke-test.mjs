@@ -69,10 +69,44 @@ async function main() {
   } finally {
     stop(app2);
     stop(mock2);
+  }
+
+  prepareConfig("config.mock-low-rate.json");
+  resetData();
+
+  const mock3 = start("node", ["apps/mock-provider/server.js"]);
+  const app3 = start("node", ["apps/server/src/server.js"]);
+
+  try {
+    await waitForHealth("http://127.0.0.1:8788/health");
+    await waitForHealth("http://127.0.0.1:8787/health");
+
+    const first = await chat();
+    assert(first.status === 200, `期望第一次请求返回 200，实际 ${first.status}`);
+
+    const second = await chat();
+    assert(second.status === 429, `期望限流返回 429，实际 ${second.status}`);
+  } finally {
+    stop(app3);
+    stop(mock3);
     restoreConfig();
   }
 
   console.log("smoke test 通过");
+}
+
+function chat() {
+  return fetch("http://127.0.0.1:8787/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: "Bearer asg_demo_local_key"
+    },
+    body: JSON.stringify({
+      model: "mock-model",
+      messages: [{ role: "user", content: "hello" }]
+    })
+  });
 }
 
 function prepareConfig(sourceFile) {
