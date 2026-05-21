@@ -109,6 +109,11 @@ node scripts/smoke-test.mjs
 
 脚本会临时创建 `config.json`，如果你已有本地配置，会先备份为 `config.json.smoke-backup`，结束后恢复。
 
+## 接入文档
+
+- [OpenRouter 接入指南](docs/technical/06-openrouter-setup.md)
+- [AI 编程工具接入指南](docs/technical/07-ai-coding-tool-setup.md)
+
 ## 当前限制
 
 - 只支持 `/v1/chat/completions`。
