@@ -26,3 +26,11 @@ export function sendHtml(res, html) {
   res.end(html);
 }
 
+export function sendText(res, statusCode, text, contentType = "text/plain; charset=utf-8", extraHeaders = {}) {
+  res.writeHead(statusCode, {
+    "content-type": contentType,
+    "content-length": Buffer.byteLength(text),
+    ...extraHeaders
+  });
+  res.end(text);
+}

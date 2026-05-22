@@ -39,6 +39,10 @@ async function main() {
     const summary = await fetch("http://127.0.0.1:8787/api/dashboard/summary").then((item) => item.json());
     assert(summary.requestCount === 1, `期望 requestCount=1，实际 ${summary.requestCount}`);
     assert(summary.todaySpend > 0, `期望 todaySpend > 0，实际 ${summary.todaySpend}`);
+
+    const csv = await fetch("http://127.0.0.1:8787/api/usage.csv").then((item) => item.text());
+    assert(csv.includes("createdAt,projectId,virtualKeyId"), "CSV 表头不符合预期");
+    assert(csv.includes("mock-model"), "CSV 内容缺少 mock-model 记录");
   } finally {
     stop(app);
     stop(mock);

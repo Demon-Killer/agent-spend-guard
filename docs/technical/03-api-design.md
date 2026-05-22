@@ -102,6 +102,21 @@
 - date_from
 - date_to
 
+### GET /api/usage.csv
+
+导出用量记录 CSV。
+
+响应：
+
+- `content-type: text/csv`
+- 文件名：`agent-spend-guard-usage.csv`
+
+CSV 字段：
+
+```text
+createdAt,projectId,virtualKeyId,providerId,model,requestType,inputTokens,outputTokens,estimatedCostUsd,latencyMs,statusCode,errorCode,stream
+```
+
 ### GET /api/events
 
 查询预算和熔断事件。

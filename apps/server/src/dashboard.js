@@ -16,6 +16,9 @@ export function dashboardHtml() {
     .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
     .label { color: #6b7280; font-size: 13px; }
     .value { font-size: 24px; font-weight: 700; margin-top: 6px; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 28px; }
+    .toolbar h2 { margin: 0; }
+    .button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px 10px; color: #111827; background: #fff; text-decoration: none; font-size: 13px; }
     table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
     th, td { padding: 10px 12px; border-bottom: 1px solid #eef0f3; text-align: left; font-size: 13px; }
     th { color: #4b5563; background: #fafafa; }
@@ -29,7 +32,10 @@ export function dashboardHtml() {
     <h1>AgentSpendGuard</h1>
     <p>本地 AI Coding 成本防火墙。默认只记录用量元数据，不保存 prompt 内容。</p>
     <section class="grid" id="summary"></section>
-    <h2>最近用量</h2>
+    <div class="toolbar">
+      <h2>最近用量</h2>
+      <a class="button" href="/api/usage.csv">导出 CSV</a>
+    </div>
     <table>
       <thead><tr><th>时间</th><th>项目</th><th>模型</th><th>费用</th><th>状态</th><th>延迟</th></tr></thead>
       <tbody id="usage"></tbody>

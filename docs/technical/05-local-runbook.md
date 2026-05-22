@@ -39,6 +39,12 @@ node apps/server/src/server.js
 http://127.0.0.1:8787
 ```
 
+导出用量 CSV：
+
+```text
+http://127.0.0.1:8787/api/usage.csv
+```
+
 ## 请求示例
 
 ```bash
@@ -116,6 +122,22 @@ data/budget-events.jsonl
 
 当前只记录元数据，不保存 prompt 和模型输出。
 
+## 导出用量 CSV
+
+打开：
+
+```text
+http://127.0.0.1:8787/api/usage.csv
+```
+
+或在 Dashboard 点击“导出 CSV”。
+
+CSV 当前字段：
+
+```text
+createdAt,projectId,virtualKeyId,providerId,model,requestType,inputTokens,outputTokens,estimatedCostUsd,latencyMs,statusCode,errorCode,stream
+```
+
 ## 无真实 Key 的 smoke test
 
 如果你没有 OpenRouter/OpenAI Key，可以使用内置 mock provider 测试完整链路：
@@ -130,6 +152,7 @@ node scripts/smoke-test.mjs
 - 启动 AgentSpendGuard：`http://127.0.0.1:8787`
 - 发送一次 `/v1/chat/completions`
 - 检查 Dashboard summary
+- 检查 `/api/usage.csv`
 - 使用 0 预算配置验证 `402` 熔断
 - 使用低请求频率配置验证 `429` 限流
 
