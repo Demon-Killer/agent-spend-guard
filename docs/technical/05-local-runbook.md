@@ -39,6 +39,15 @@ node apps/server/src/server.js
 http://127.0.0.1:8787
 ```
 
+Dashboard 当前可以：
+
+- 查看用量。
+- 查看熔断/限流事件。
+- 新增 Provider。
+- 新增 Project。
+- 新增 Virtual Key。
+- 导出 CSV。
+
 导出用量 CSV：
 
 ```text
@@ -153,6 +162,7 @@ node scripts/smoke-test.mjs
 - 发送一次 `/v1/chat/completions`
 - 检查 Dashboard summary
 - 检查 `/api/usage.csv`
+- 检查配置管理 API 新增 Provider/Project/Virtual Key
 - 使用 0 预算配置验证 `402` 熔断
 - 使用低请求频率配置验证 `429` 限流
 

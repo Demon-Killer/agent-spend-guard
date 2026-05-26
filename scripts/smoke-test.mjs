@@ -7,100 +7,101 @@ const configPath = path.join(rootDir, "config.json");
 const backupPath = path.join(rootDir, "config.json.smoke-backup");
 const dataDir = path.join(rootDir, "data");
 
+const appHost = "127.0.0.1";
+const appPort = 18787;
+const mockHost = "127.0.0.1";
+const mockPort = 18788;
+const appBase = `http://${appHost}:${appPort}`;
+const mockBase = `http://${mockHost}:${mockPort}`;
+
 let hadConfig = false;
 let ownsConfig = false;
 
 async function main() {
-  prepareConfig("config.mock.json");
+  await withServers("config.mock.json", async () => {
+    const response = await chat();
+    assert(response.status === 200, `expected proxy 200, got ${response.status}`);
+    const body = await response.json();
+    assert(body.choices?.[0]?.message?.content === "mock response", "unexpected proxy response");
+
+    const summary = await fetch(`${appBase}/api/dashboard/summary`).then((item) => item.json());
+    assert(summary.requestCount === 1, `expected requestCount=1, got ${summary.requestCount}`);
+    assert(summary.todaySpend > 0, `expected todaySpend > 0, got ${summary.todaySpend}`);
+
+    const csv = await fetch(`${appBase}/api/usage.csv`).then((item) => item.text());
+    assert(csv.includes("createdAt,projectId,virtualKeyId"), "unexpected CSV header");
+    assert(csv.includes("mock-model"), "CSV is missing mock-model record");
+
+    const createdProvider = await postJson(`${appBase}/api/providers`, {
+      id: "mock-extra",
+      name: "Mock Extra",
+      baseUrl: `${mockBase}/v1`,
+      apiKey: "extra-secret-key"
+    });
+    assert(createdProvider.provider.id === "mock-extra", "failed to create provider");
+
+    const createdProject = await postJson(`${appBase}/api/projects`, {
+      id: "extra-project",
+      name: "Extra Project",
+      providerId: "mock-extra",
+      dailyBudgetUsd: 2,
+      monthlyBudgetUsd: 20,
+      maxRequestsPerMinute: 10
+    });
+    assert(createdProject.project.id === "extra-project", "failed to create project");
+
+    const createdKey = await postJson(`${appBase}/api/virtual-keys`, {
+      id: "extra-key",
+      name: "Extra Key",
+      projectId: "extra-project"
+    });
+    assert(createdKey.virtualKey.key.startsWith("asg_"), "failed to auto-generate virtual key");
+
+    const config = await fetch(`${appBase}/api/config`).then((item) => item.json());
+    const extraProvider = config.providers.find((item) => item.id === "mock-extra");
+    assert(extraProvider, "public config is missing new provider");
+    assert(extraProvider.apiKey !== "extra-secret-key", "public config must not expose plain API key");
+  });
+
+  await withServers("config.mock-low-budget.json", async () => {
+    const response = await chat();
+    assert(response.status === 402, `expected budget 402, got ${response.status}`);
+  });
+
+  await withServers("config.mock-low-rate.json", async () => {
+    const first = await chat();
+    assert(first.status === 200, `expected first request 200, got ${first.status}`);
+
+    const second = await chat();
+    assert(second.status === 429, `expected rate limit 429, got ${second.status}`);
+  });
+
+  restoreConfig();
+  console.log("smoke test passed");
+}
+
+async function withServers(sourceFile, fn) {
+  prepareConfig(sourceFile);
   resetData();
 
-  const mock = start("node", ["apps/mock-provider/server.js"]);
+  const mock = start("node", ["apps/mock-provider/server.js"], {
+    MOCK_PROVIDER_HOST: mockHost,
+    MOCK_PROVIDER_PORT: String(mockPort)
+  });
   const app = start("node", ["apps/server/src/server.js"]);
 
   try {
-    await waitForHealth("http://127.0.0.1:8788/health");
-    await waitForHealth("http://127.0.0.1:8787/health");
-
-    const response = await fetch("http://127.0.0.1:8787/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: "Bearer asg_demo_local_key"
-      },
-      body: JSON.stringify({
-        model: "mock-model",
-        messages: [{ role: "user", content: "hello" }]
-      })
-    });
-    assert(response.status === 200, `期望代理返回 200，实际 ${response.status}`);
-    const body = await response.json();
-    assert(body.choices?.[0]?.message?.content === "mock response", "代理响应内容不符合预期");
-
-    const summary = await fetch("http://127.0.0.1:8787/api/dashboard/summary").then((item) => item.json());
-    assert(summary.requestCount === 1, `期望 requestCount=1，实际 ${summary.requestCount}`);
-    assert(summary.todaySpend > 0, `期望 todaySpend > 0，实际 ${summary.todaySpend}`);
-
-    const csv = await fetch("http://127.0.0.1:8787/api/usage.csv").then((item) => item.text());
-    assert(csv.includes("createdAt,projectId,virtualKeyId"), "CSV 表头不符合预期");
-    assert(csv.includes("mock-model"), "CSV 内容缺少 mock-model 记录");
+    await waitForHealth(`${mockBase}/health`);
+    await waitForHealth(`${appBase}/health`);
+    await fn();
   } finally {
     stop(app);
     stop(mock);
   }
-
-  prepareConfig("config.mock-low-budget.json");
-  resetData();
-
-  const mock2 = start("node", ["apps/mock-provider/server.js"]);
-  const app2 = start("node", ["apps/server/src/server.js"]);
-
-  try {
-    await waitForHealth("http://127.0.0.1:8788/health");
-    await waitForHealth("http://127.0.0.1:8787/health");
-
-    const response = await fetch("http://127.0.0.1:8787/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: "Bearer asg_demo_local_key"
-      },
-      body: JSON.stringify({
-        model: "mock-model",
-        messages: [{ role: "user", content: "hello" }]
-      })
-    });
-    assert(response.status === 402, `期望预算熔断返回 402，实际 ${response.status}`);
-  } finally {
-    stop(app2);
-    stop(mock2);
-  }
-
-  prepareConfig("config.mock-low-rate.json");
-  resetData();
-
-  const mock3 = start("node", ["apps/mock-provider/server.js"]);
-  const app3 = start("node", ["apps/server/src/server.js"]);
-
-  try {
-    await waitForHealth("http://127.0.0.1:8788/health");
-    await waitForHealth("http://127.0.0.1:8787/health");
-
-    const first = await chat();
-    assert(first.status === 200, `期望第一次请求返回 200，实际 ${first.status}`);
-
-    const second = await chat();
-    assert(second.status === 429, `期望限流返回 429，实际 ${second.status}`);
-  } finally {
-    stop(app3);
-    stop(mock3);
-    restoreConfig();
-  }
-
-  console.log("smoke test 通过");
 }
 
 function chat() {
-  return fetch("http://127.0.0.1:8787/v1/chat/completions", {
+  return fetch(`${appBase}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -113,6 +114,17 @@ function chat() {
   });
 }
 
+async function postJson(url, payload) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const body = await response.json();
+  assert(response.ok, `POST ${url} failed: ${JSON.stringify(body)}`);
+  return body;
+}
+
 function prepareConfig(sourceFile) {
   if (!ownsConfig && fs.existsSync(configPath) && !fs.existsSync(backupPath)) {
     fs.renameSync(configPath, backupPath);
@@ -121,7 +133,15 @@ function prepareConfig(sourceFile) {
   if (ownsConfig && fs.existsSync(configPath)) {
     fs.unlinkSync(configPath);
   }
-  fs.copyFileSync(path.join(rootDir, sourceFile), configPath);
+  const config = JSON.parse(fs.readFileSync(path.join(rootDir, sourceFile), "utf8"));
+  config.server.host = appHost;
+  config.server.port = appPort;
+  for (const provider of config.providers) {
+    if (provider.id === "mock") {
+      provider.baseUrl = `${mockBase}/v1`;
+    }
+  }
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
   ownsConfig = true;
 }
 
@@ -140,11 +160,12 @@ function resetData() {
   fs.rmSync(dataDir, { recursive: true, force: true });
 }
 
-function start(command, args) {
+function start(command, args, env = {}) {
   const child = spawn(command, args, {
     cwd: rootDir,
     stdio: "pipe",
-    windowsHide: true
+    windowsHide: true,
+    env: { ...process.env, ...env }
   });
   child.stdout.on("data", () => {});
   child.stderr.on("data", (data) => {
@@ -171,7 +192,7 @@ async function waitForHealth(url) {
       await sleep(100);
     }
   }
-  throw new Error(`等待健康检查超时：${url}`);
+  throw new Error(`health check timeout: ${url}`);
 }
 
 function sleep(ms) {
@@ -189,3 +210,4 @@ main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
+

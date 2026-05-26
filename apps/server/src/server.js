@@ -1,8 +1,8 @@
 import http from "node:http";
 import { usageToCsv } from "./csv.js";
 import { dashboardHtml, dashboardSummary } from "./dashboard.js";
-import { ensureDataDir, loadConfig } from "./config.js";
-import { sendHtml, sendJson, sendText } from "./http.js";
+import { addProject, addProvider, addVirtualKey, ensureDataDir, loadConfig, publicConfig, saveConfig } from "./config.js";
+import { readOptionalJsonBody, sendHtml, sendJson, sendText } from "./http.js";
 import { handleChatCompletions } from "./proxy.js";
 import { readBudgetEvents, readUsageRecords } from "./store.js";
 
@@ -42,6 +42,31 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { records });
     }
 
+    if (req.method === "GET" && url.pathname === "/api/config") {
+      return sendJson(res, 200, publicConfig(config));
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/providers") {
+      const input = await readOptionalJsonBody(req);
+      const provider = addProvider(config, input);
+      saveConfig(config);
+      return sendJson(res, 201, { provider: { ...provider, apiKey: provider.apiKey ? "********" : "" } });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/projects") {
+      const input = await readOptionalJsonBody(req);
+      const project = addProject(config, input);
+      saveConfig(config);
+      return sendJson(res, 201, { project });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/virtual-keys") {
+      const input = await readOptionalJsonBody(req);
+      const virtualKey = addVirtualKey(config, input);
+      saveConfig(config);
+      return sendJson(res, 201, { virtualKey });
+    }
+
     if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
       return handleChatCompletions(req, res, config);
     }
@@ -65,5 +90,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(config.server.port, config.server.host, () => {
-  console.log(`AgentSpendGuard 已启动：http://${config.server.host}:${config.server.port}`);
+  console.log(`AgentSpendGuard started: http://${config.server.host}:${config.server.port}`);
 });

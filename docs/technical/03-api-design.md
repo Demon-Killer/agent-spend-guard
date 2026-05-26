@@ -120,3 +120,61 @@ createdAt,projectId,virtualKeyId,providerId,model,requestType,inputTokens,output
 ### GET /api/events
 
 查询预算和熔断事件。
+
+### GET /api/config
+
+查询当前本地配置。
+
+注意：
+
+- Provider API Key 会脱敏返回。
+- 明文 Key 只保存在本地 `config.json`。
+
+### POST /api/providers
+
+新增 provider。
+
+请求示例：
+
+```json
+{
+  "id": "openrouter",
+  "name": "OpenRouter",
+  "type": "openai-compatible",
+  "baseUrl": "https://openrouter.ai/api/v1",
+  "apiKey": "your-provider-key"
+}
+```
+
+### POST /api/projects
+
+新增 project。
+
+请求示例：
+
+```json
+{
+  "id": "my-project",
+  "name": "My Project",
+  "providerId": "openrouter",
+  "dailyBudgetUsd": 1,
+  "monthlyBudgetUsd": 20,
+  "maxRequestsPerMinute": 30
+}
+```
+
+### POST /api/virtual-keys
+
+新增 virtual key。
+
+请求示例：
+
+```json
+{
+  "id": "my-project-key",
+  "name": "My Project Key",
+  "projectId": "my-project"
+}
+```
+
+如果不传 `key`，系统会自动生成一个 `asg_` 开头的虚拟 Key。

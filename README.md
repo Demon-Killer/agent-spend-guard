@@ -76,6 +76,13 @@ node apps/server/src/server.js
 http://127.0.0.1:8787
 ```
 
+Dashboard 当前支持：
+
+- 查看今日/本月花费。
+- 查看最近用量和最近事件。
+- 新增 Provider、Project、Virtual Key。
+- 导出用量 CSV。
+
 导出用量 CSV：
 
 ```text
@@ -111,6 +118,7 @@ node scripts/smoke-test.mjs
 - AgentSpendGuard 可以转发 `/v1/chat/completions`。
 - 用量会写入本地记录。
 - Dashboard summary 能统计请求和费用。
+- Dashboard 可以新增 Provider/Project/Virtual Key。
 - 用量 CSV 可以导出。
 - 预算为 0 时会返回 `402`。
 - 每分钟请求数超限时会返回 `429`。
