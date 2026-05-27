@@ -40,6 +40,20 @@ node scripts/smoke-test.mjs
 smoke test passed
 ```
 
+如果要跑真实 OpenRouter 测试：
+
+```bash
+OPENROUTER_API_KEY=你的真实Key node scripts/openrouter-test.mjs
+```
+
+可选指定模型：
+
+```bash
+OPENROUTER_API_KEY=你的真实Key OPENROUTER_MODEL=openai/gpt-4o-mini node scripts/openrouter-test.mjs
+```
+
+这个脚本会临时写入本地 `config.json`，结束后自动恢复；不会把真实 Key 提交到 Git。
+
 测试会验证：
 
 - mock provider 返回 OpenAI-compatible 响应。
@@ -164,4 +178,3 @@ research/          竞品和市场调研
 - 流式请求可以转发，但流式 token 费用暂时只能估算输入侧。
 - 当前用 JSONL 文件记录用量，后续可替换为 SQLite。
 - 当前没有登录系统，不适合公网部署。
-

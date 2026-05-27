@@ -11,6 +11,29 @@
 
 ## 1. 准备配置
 
+推荐优先使用脚本方式，不需要手动写 `config.json`：
+
+```bash
+OPENROUTER_API_KEY=你的真实Key node scripts/openrouter-test.mjs
+```
+
+指定模型：
+
+```bash
+OPENROUTER_API_KEY=你的真实Key OPENROUTER_MODEL=openai/gpt-4o-mini node scripts/openrouter-test.mjs
+```
+
+脚本会：
+
+- 使用独立端口 `18787`，避免影响你正在运行的本地服务。
+- 临时创建 `config.json`。
+- 调用真实 OpenRouter。
+- 检查 Dashboard summary。
+- 检查 CSV 记录。
+- 结束后恢复原始 `config.json`。
+
+如果你想手动验证，可以继续按下面步骤操作。
+
 ```bash
 cp config.example.json config.json
 ```
@@ -145,4 +168,3 @@ HTTP 402
 - `config.json` 没有被 Git 跟踪。
 - `GET /api/config` 返回的 provider `apiKey` 是脱敏值。
 - Dashboard 没有展示明文 provider API Key。
-

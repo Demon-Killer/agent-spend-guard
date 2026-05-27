@@ -170,3 +170,19 @@ node scripts/smoke-test.mjs
 
 - 测试脚本会临时写入 `config.json`。
 - 如果已有 `config.json`，脚本会备份并在结束后恢复。
+
+## 真实 OpenRouter test
+
+如果你已经有 OpenRouter API Key，可以运行：
+
+```bash
+OPENROUTER_API_KEY=你的真实Key node scripts/openrouter-test.mjs
+```
+
+也可以指定模型：
+
+```bash
+OPENROUTER_API_KEY=你的真实Key OPENROUTER_MODEL=openai/gpt-4o-mini node scripts/openrouter-test.mjs
+```
+
+如果没有设置 `OPENROUTER_API_KEY`，脚本会自动跳过，不会失败。
