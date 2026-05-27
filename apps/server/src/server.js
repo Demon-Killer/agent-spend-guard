@@ -91,4 +91,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(config.server.port, config.server.host, () => {
   console.log(`AgentSpendGuard started: http://${config.server.host}:${config.server.port}`);
+  console.log("Security: keep this service on localhost or a trusted private network.");
 });

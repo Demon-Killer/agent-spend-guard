@@ -48,6 +48,7 @@ cp config.example.json config.json
       "providerId": "openrouter",
       "dailyBudgetUsd": 1,
       "monthlyBudgetUsd": 10,
+      "maxRequestsPerMinute": 30,
       "enabled": true
     }
   ]
@@ -96,6 +97,8 @@ curl http://127.0.0.1:8787/v1/chat/completions \
   }'
 ```
 
+如果模型名不可用，请换成你 OpenRouter 账户可调用的模型。
+
 ## 5. 查看 Dashboard
 
 打开：
@@ -111,6 +114,7 @@ http://127.0.0.1:8787
 - 请求数。
 - 错误数。
 - 最近用量。
+- 最近事件。
 
 ## 6. 常见问题
 
@@ -128,7 +132,14 @@ Authorization: Bearer asg_demo_local_key
 
 说明项目预算已经超限。
 
-检查 `dailyBudgetUsd` 或 `monthlyBudgetUsd`。
+检查：
+
+- `dailyBudgetUsd`
+- `monthlyBudgetUsd`
+
+### 返回 429
+
+说明项目最近 60 秒请求数超过 `maxRequestsPerMinute`。
 
 ### 返回 502
 
