@@ -3,7 +3,7 @@ import { usageToCsv } from "./csv.js";
 import { dashboardHtml, dashboardSummary } from "./dashboard.js";
 import { addProject, addProvider, addVirtualKey, ensureDataDir, loadConfig, publicConfig, saveConfig } from "./config.js";
 import { readOptionalJsonBody, sendHtml, sendJson, sendText } from "./http.js";
-import { handleChatCompletions } from "./proxy.js";
+import { handleChatCompletions, handleModels } from "./proxy.js";
 import { readBudgetEvents, readUsageRecords } from "./store.js";
 
 ensureDataDir();
@@ -69,6 +69,10 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
       return handleChatCompletions(req, res, config);
+    }
+
+    if (req.method === "GET" && url.pathname === "/v1/models") {
+      return handleModels(req, res, config);
     }
 
     return sendJson(res, 404, {

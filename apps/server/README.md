@@ -17,6 +17,7 @@ MVP 职责：
 已实现：
 
 - `POST /v1/chat/completions` 代理。
+- `GET /v1/models` 模型列表兼容接口。
 - 虚拟 Key 校验。
 - 项目预算预检查。
 - JSONL 用量记录。

@@ -24,6 +24,12 @@ async function main() {
     const body = await response.json();
     assert(body.choices?.[0]?.message?.content === "mock response", "unexpected proxy response");
 
+    const models = await fetch(`${appBase}/v1/models`, {
+      headers: { authorization: "Bearer asg_demo_local_key" }
+    }).then((item) => item.json());
+    assert(models.object === "list", "unexpected models response object");
+    assert(models.data.some((item) => item.id === "mock-model"), "models response is missing mock-model");
+
     const summary = await fetch(`${appBase}/api/dashboard/summary`).then((item) => item.json());
     assert(summary.requestCount === 1, `expected requestCount=1, got ${summary.requestCount}`);
     assert(summary.todaySpend > 0, `expected todaySpend > 0, got ${summary.todaySpend}`);
@@ -210,4 +216,3 @@ main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

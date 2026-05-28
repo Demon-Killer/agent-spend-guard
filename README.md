@@ -58,6 +58,7 @@ OPENROUTER_API_KEY=你的真实Key OPENROUTER_MODEL=openai/gpt-4o-mini node scri
 
 - mock provider 返回 OpenAI-compatible 响应。
 - AgentSpendGuard 转发 `/v1/chat/completions`。
+- AgentSpendGuard 提供 `/v1/models` 兼容接口，优先转发上游模型列表，必要时回退本地模型配置。
 - Dashboard summary 统计请求和费用。
 - 配置管理 API 可以新增 Provider、Project、Virtual Key。
 - 用量 CSV 可以导出。
@@ -110,6 +111,7 @@ http://127.0.0.1:8787/api/usage.csv
 已实现：
 
 - OpenAI-compatible `/v1/chat/completions` 代理。
+- OpenAI-compatible `/v1/models` 模型列表。
 - Virtual Key 校验。
 - Provider、Project、Virtual Key 本地配置管理。
 - 每日/月度预算限制。
@@ -174,7 +176,7 @@ research/          竞品和市场调研
 
 ## 当前限制
 
-- 只支持 `/v1/chat/completions`。
+- 当前主要支持 `/v1/chat/completions` 和 `/v1/models`。
 - 流式请求可以转发，但流式 token 费用暂时只能估算输入侧。
 - 当前用 JSONL 文件记录用量，后续可替换为 SQLite。
 - 当前没有登录系统，不适合公网部署。

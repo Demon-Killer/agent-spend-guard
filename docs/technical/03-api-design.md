@@ -46,6 +46,33 @@
 }
 ```
 
+### GET /v1/models
+
+兼容 OpenAI 的模型列表接口。
+
+请求：
+- Authorization header 使用 AgentSpendGuard 的虚拟 Key。
+
+响应：
+- 上游 provider 支持 `/models` 时，优先透传上游响应。
+- 上游返回 `404` 或 `405` 时，回退到本地 `modelPrices` 配置生成模型列表。
+- 上游返回 `401`、`403`、`429`、`5xx` 等错误时，保留上游错误，避免掩盖 provider 认证或服务问题。
+
+回退响应示例：
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "openai/gpt-4o-mini",
+      "object": "model",
+      "created": 0,
+      "owned_by": "openrouter"
+    }
+  ]
+}
+```
+
 ## Dashboard API
 
 ### GET /api/dashboard/summary
