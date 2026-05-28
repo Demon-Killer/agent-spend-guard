@@ -18,3 +18,8 @@
 14. [风险分析](business/02-risks.md)
 15. [验证计划](go-to-market/01-validation-plan.md)
 16. [14 天执行计划](go-to-market/02-14-day-plan.md)
+17. [发布文案](go-to-market/03-launch-copy.md)
+18. [用户触达模板](go-to-market/04-user-outreach.md)
+19. [用户访谈问题](feedback/01-interview-questions.md)
+20. [反馈记录模板](feedback/02-feedback-log-template.md)
+21. [v0.1 发布检查清单](product/04-v0.1-release-checklist.md)
