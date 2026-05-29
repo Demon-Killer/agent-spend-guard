@@ -87,6 +87,22 @@ node apps/server/src/server.js
 http://127.0.0.1:8787
 ```
 
+可选开启 Dashboard 和 `/api/*` 管理接口保护：
+
+```json
+"server": {
+  "host": "127.0.0.1",
+  "port": 8787,
+  "adminToken": "replace-with-a-local-admin-token"
+}
+```
+
+开启后访问 Dashboard：
+
+```text
+http://127.0.0.1:8787/?admin_token=replace-with-a-local-admin-token
+```
+
 AI 编程工具配置：
 
 ```text
@@ -120,6 +136,7 @@ http://127.0.0.1:8787/api/usage.csv
 - 最近用量 Dashboard。
 - 最近事件 Dashboard。
 - CSV 导出。
+- 可选 Dashboard 和 `/api/*` 管理接口 Token 保护。
 - Mock Provider。
 - Smoke Test。
 
@@ -141,12 +158,12 @@ AgentSpendGuard 当前是本地 MVP，请按以下方式使用：
 - 不要提交 `config.json`。
 - Provider API Key 目前明文保存在本地 `config.json`。
 - `GET /api/config` 会脱敏返回 Provider API Key。
+- 如果配置 `server.adminToken` 或环境变量 `AGENT_SPEND_GUARD_ADMIN_TOKEN`，Dashboard 数据接口和 `/api/*` 管理接口必须携带 `x-admin-token` 或 `?admin_token=`。
 - 默认不保存 prompt 和模型输出。
 
 后续可以增加：
 
 - 本地 API Key 加密存储。
-- Dashboard 管理密码。
 - 只监听 `127.0.0.1` 的默认安全策略。
 
 ## 接入文档

@@ -39,6 +39,30 @@ node apps/server/src/server.js
 http://127.0.0.1:8787
 ```
 
+可选开启 Dashboard 和 `/api/*` 管理接口保护：
+
+```json
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8787,
+    "adminToken": "replace-with-a-local-admin-token"
+  }
+}
+```
+
+也可以使用环境变量：
+
+```bash
+AGENT_SPEND_GUARD_ADMIN_TOKEN=replace-with-a-local-admin-token node apps/server/src/server.js
+```
+
+开启后访问 Dashboard：
+
+```text
+http://127.0.0.1:8787/?admin_token=replace-with-a-local-admin-token
+```
+
 Dashboard 当前可以：
 
 - 查看用量。
@@ -51,8 +75,10 @@ Dashboard 当前可以：
 导出用量 CSV：
 
 ```text
-http://127.0.0.1:8787/api/usage.csv
+http://127.0.0.1:8787/api/usage.csv?admin_token=replace-with-a-local-admin-token
 ```
+
+如果没有开启管理保护，也可以继续直接访问 `/api/usage.csv`。
 
 ## 请求示例
 
@@ -136,7 +162,7 @@ data/budget-events.jsonl
 打开：
 
 ```text
-http://127.0.0.1:8787/api/usage.csv
+http://127.0.0.1:8787/api/usage.csv?admin_token=replace-with-a-local-admin-token
 ```
 
 或在 Dashboard 点击“导出 CSV”。

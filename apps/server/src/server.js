@@ -13,6 +13,16 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
   try {
+    if (isAdminRoute(req, url) && !isAdminAllowed(req, url, config)) {
+      return sendJson(res, 401, {
+        error: {
+          message: "Invalid AgentSpendGuard admin token",
+          type: "auth_error",
+          code: "invalid_admin_token"
+        }
+      });
+    }
+
     if (req.method === "GET" && url.pathname === "/") {
       return sendHtml(res, dashboardHtml());
     }
@@ -96,4 +106,24 @@ const server = http.createServer(async (req, res) => {
 server.listen(config.server.port, config.server.host, () => {
   console.log(`AgentSpendGuard started: http://${config.server.host}:${config.server.port}`);
   console.log("Security: keep this service on localhost or a trusted private network.");
+  if (config.server.adminToken) {
+    console.log("Admin API protection is enabled.");
+  }
 });
+
+function isAdminRoute(req, url) {
+  if (url.pathname === "/health") {
+    return false;
+  }
+  return url.pathname.startsWith("/api/");
+}
+
+function isAdminAllowed(req, url, config) {
+  const expected = String(process.env.AGENT_SPEND_GUARD_ADMIN_TOKEN || config.server.adminToken || "");
+  if (!expected) {
+    return true;
+  }
+  const headerValue = req.headers["x-admin-token"];
+  const actual = Array.isArray(headerValue) ? headerValue[0] : headerValue || url.searchParams.get("admin_token") || "";
+  return actual === expected;
+}

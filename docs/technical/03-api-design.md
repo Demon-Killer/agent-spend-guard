@@ -75,6 +75,14 @@
 
 ## Dashboard API
 
+如果配置了 `server.adminToken` 或环境变量 `AGENT_SPEND_GUARD_ADMIN_TOKEN`，所有 `/api/*` 管理接口都必须携带管理 Token。
+
+支持两种传递方式：
+- Header：`x-admin-token: your-admin-token`
+- Query：`?admin_token=your-admin-token`
+
+未开启管理 Token 时，保持本地快速试用体验，不额外拦截 `/api/*`。
+
 ### GET /api/dashboard/summary
 
 返回：

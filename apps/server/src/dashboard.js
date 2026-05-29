@@ -81,7 +81,7 @@ export function dashboardHtml() {
     </table>
     <div class="toolbar">
       <h2>最近用量</h2>
-      <a class="button" href="/api/usage.csv">导出 CSV</a>
+      <a class="button" id="usage-export" href="/api/usage.csv">导出 CSV</a>
     </div>
     <table>
       <thead><tr><th>时间</th><th>项目</th><th>模型</th><th>费用</th><th>状态</th><th>延迟</th></tr></thead>
@@ -94,9 +94,29 @@ export function dashboardHtml() {
     </table>
   </main>
   <script>
+    const params = new URLSearchParams(location.search);
+    const adminToken = params.get("admin_token") || localStorage.getItem("agentSpendGuardAdminToken") || "";
+    if (params.get("admin_token")) {
+      localStorage.setItem("agentSpendGuardAdminToken", params.get("admin_token"));
+      history.replaceState(null, "", location.pathname);
+    }
+    function apiFetch(url, options = {}) {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          ...(adminToken ? { "x-admin-token": adminToken } : {})
+        }
+      });
+    }
     const money = (n) => "$" + Number(n || 0).toFixed(6);
     async function load() {
-      const summary = await fetch("/api/dashboard/summary").then(r => r.json());
+      const summaryResponse = await apiFetch("/api/dashboard/summary");
+      if (summaryResponse.status === 401) {
+        document.getElementById("summary").innerHTML = '<div class="card"><div class="label">Admin Token</div><div class="value">Required</div><p class="muted">Open /?admin_token=your-token once.</p></div>';
+        return;
+      }
+      const summary = await summaryResponse.json();
       document.getElementById("summary").innerHTML = [
         ["今日花费", money(summary.todaySpend)],
         ["本月花费", money(summary.monthSpend)],
@@ -104,18 +124,19 @@ export function dashboardHtml() {
         ["错误数", summary.errorCount]
       ].map(([label, value]) => '<div class="card"><div class="label">' + label + '</div><div class="value">' + value + '</div></div>').join("");
 
-      const usage = await fetch("/api/usage").then(r => r.json());
+      const usage = await apiFetch("/api/usage").then(r => r.json());
       document.getElementById("usage").innerHTML = usage.records.slice(0, 50).map((r) =>
         "<tr><td>" + r.createdAt + "</td><td>" + r.projectId + "</td><td><code>" + r.model + "</code></td><td>" + money(r.estimatedCostUsd) + "</td><td>" + r.statusCode + "</td><td>" + r.latencyMs + "ms</td></tr>"
       ).join("");
 
-      const events = await fetch("/api/events").then(r => r.json());
+      const events = await apiFetch("/api/events").then(r => r.json());
       document.getElementById("events").innerHTML = events.records.slice(0, 20).map((r) =>
         "<tr><td>" + r.createdAt + "</td><td>" + r.projectId + "</td><td><code>" + r.eventType + "</code></td><td>" + r.currentValueUsd + "</td><td>" + r.limitValueUsd + "</td></tr>"
       ).join("");
 
-      const config = await fetch("/api/config").then(r => r.json());
+      const config = await apiFetch("/api/config").then(r => r.json());
       renderConfig(config);
+      document.getElementById("usage-export").href = adminToken ? "/api/usage.csv?admin_token=" + encodeURIComponent(adminToken) : "/api/usage.csv";
     }
     function renderConfig(config) {
       const providerOptions = config.providers.map(p => '<option value="' + p.id + '">' + p.name + ' (' + p.id + ')</option>').join("");
@@ -136,7 +157,7 @@ export function dashboardHtml() {
     }
     async function postForm(form, url, transform = (x) => x) {
       const payload = transform(formData(form));
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload)

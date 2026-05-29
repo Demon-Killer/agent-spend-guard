@@ -32,6 +32,9 @@ function validateConfig(config, configPath) {
   if (!config.server || !Number.isInteger(config.server.port)) {
     throw new Error(`Invalid config ${configPath}: missing server.port`);
   }
+  if (config.server.adminToken !== undefined && typeof config.server.adminToken !== "string") {
+    throw new Error(`Invalid config ${configPath}: server.adminToken must be a string`);
+  }
   if (!Array.isArray(config.providers)) {
     throw new Error(`Invalid config ${configPath}: providers must be an array`);
   }
@@ -46,6 +49,10 @@ function validateConfig(config, configPath) {
 export function publicConfig(config) {
   return {
     ...config,
+    server: {
+      ...config.server,
+      adminToken: config.server.adminToken ? maskSecret(config.server.adminToken) : ""
+    },
     providers: config.providers.map((provider) => ({
       ...provider,
       apiKey: provider.apiKey ? maskSecret(provider.apiKey) : ""

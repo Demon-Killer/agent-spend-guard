@@ -13,6 +13,7 @@ const mockHost = "127.0.0.1";
 const mockPort = 18788;
 const appBase = `http://${appHost}:${appPort}`;
 const mockBase = `http://${mockHost}:${mockPort}`;
+const adminToken = "smoke-admin-token";
 
 let hadConfig = false;
 let ownsConfig = false;
@@ -30,11 +31,14 @@ async function main() {
     assert(models.object === "list", "unexpected models response object");
     assert(models.data.some((item) => item.id === "mock-model"), "models response is missing mock-model");
 
-    const summary = await fetch(`${appBase}/api/dashboard/summary`).then((item) => item.json());
+    const blockedSummary = await fetch(`${appBase}/api/dashboard/summary`);
+    assert(blockedSummary.status === 401, `expected admin 401, got ${blockedSummary.status}`);
+
+    const summary = await adminFetch(`${appBase}/api/dashboard/summary`).then((item) => item.json());
     assert(summary.requestCount === 1, `expected requestCount=1, got ${summary.requestCount}`);
     assert(summary.todaySpend > 0, `expected todaySpend > 0, got ${summary.todaySpend}`);
 
-    const csv = await fetch(`${appBase}/api/usage.csv`).then((item) => item.text());
+    const csv = await adminFetch(`${appBase}/api/usage.csv`).then((item) => item.text());
     assert(csv.includes("createdAt,projectId,virtualKeyId"), "unexpected CSV header");
     assert(csv.includes("mock-model"), "CSV is missing mock-model record");
 
@@ -63,7 +67,7 @@ async function main() {
     });
     assert(createdKey.virtualKey.key.startsWith("asg_"), "failed to auto-generate virtual key");
 
-    const config = await fetch(`${appBase}/api/config`).then((item) => item.json());
+    const config = await adminFetch(`${appBase}/api/config`).then((item) => item.json());
     const extraProvider = config.providers.find((item) => item.id === "mock-extra");
     assert(extraProvider, "public config is missing new provider");
     assert(extraProvider.apiKey !== "extra-secret-key", "public config must not expose plain API key");
@@ -123,7 +127,7 @@ function chat() {
 async function postJson(url, payload) {
   const response = await fetch(url, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", "x-admin-token": adminToken },
     body: JSON.stringify(payload)
   });
   const body = await response.json();
@@ -142,6 +146,7 @@ function prepareConfig(sourceFile) {
   const config = JSON.parse(fs.readFileSync(path.join(rootDir, sourceFile), "utf8"));
   config.server.host = appHost;
   config.server.port = appPort;
+  config.server.adminToken = adminToken;
   for (const provider of config.providers) {
     if (provider.id === "mock") {
       provider.baseUrl = `${mockBase}/v1`;
@@ -149,6 +154,16 @@ function prepareConfig(sourceFile) {
   }
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
   ownsConfig = true;
+}
+
+function adminFetch(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      "x-admin-token": adminToken
+    }
+  });
 }
 
 function restoreConfig() {
