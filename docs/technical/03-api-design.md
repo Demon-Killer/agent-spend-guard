@@ -213,3 +213,22 @@ createdAt,projectId,virtualKeyId,providerId,model,requestType,inputTokens,output
 ```
 
 如果不传 `key`，系统会自动生成一个 `asg_` 开头的虚拟 Key。
+
+### POST /api/model-prices
+
+新增或覆盖模型价格。
+
+请求示例：
+
+```json
+{
+  "model": "openai/gpt-4o-mini",
+  "inputPricePer1MTokens": 0.15,
+  "outputPricePer1MTokens": 0.6
+}
+```
+
+说明：
+- `model` 必须和请求里的模型 ID 一致。
+- 价格单位是 USD / 1M tokens。
+- 如果同名模型已存在，会覆盖原价格。

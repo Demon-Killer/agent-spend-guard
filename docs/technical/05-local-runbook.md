@@ -70,6 +70,7 @@ Dashboard 当前可以：
 - 新增 Provider。
 - 新增 Project。
 - 新增 Virtual Key。
+- 新增或覆盖模型价格。
 - 导出 CSV。
 
 导出用量 CSV：

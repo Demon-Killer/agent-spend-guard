@@ -74,7 +74,8 @@ Dashboard：
 - 新增 provider。
 - 新增 project。
 - 新增 virtual key。
-- 查看当前 provider、project、virtual key 列表。
+- 新增或覆盖模型价格。
+- 查看当前 provider、project、virtual key、模型价格列表。
 - Provider API Key 在公开配置中脱敏显示。
 
 Projects：
@@ -112,4 +113,3 @@ Events：
 - 展示预算超限事件。
 - 展示请求频率限流事件。
 - 展示 provider 失败事件。
-

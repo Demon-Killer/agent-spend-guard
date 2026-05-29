@@ -44,6 +44,9 @@ function validateConfig(config, configPath) {
   if (!Array.isArray(config.virtualKeys)) {
     throw new Error(`Invalid config ${configPath}: virtualKeys must be an array`);
   }
+  if (config.modelPrices !== undefined && !Array.isArray(config.modelPrices)) {
+    throw new Error(`Invalid config ${configPath}: modelPrices must be an array`);
+  }
 }
 
 export function publicConfig(config) {
@@ -115,6 +118,30 @@ export function addVirtualKey(config, input) {
   ensureUnique(config.virtualKeys, virtualKey.id, "virtual key");
   config.virtualKeys.push(virtualKey);
   return virtualKey;
+}
+
+export function upsertModelPrice(config, input) {
+  if (!Array.isArray(config.modelPrices)) {
+    config.modelPrices = [];
+  }
+  const modelPrice = {
+    model: String(input.model || "").trim(),
+    inputPricePer1MTokens: Number(input.inputPricePer1MTokens || 0),
+    outputPricePer1MTokens: Number(input.outputPricePer1MTokens || 0)
+  };
+  if (!modelPrice.model) {
+    throw new Error("model is required");
+  }
+  if (modelPrice.inputPricePer1MTokens < 0 || modelPrice.outputPricePer1MTokens < 0) {
+    throw new Error("model prices must be greater than or equal to 0");
+  }
+  const existing = config.modelPrices.find((item) => item.model === modelPrice.model);
+  if (existing) {
+    Object.assign(existing, modelPrice);
+    return existing;
+  }
+  config.modelPrices.push(modelPrice);
+  return modelPrice;
 }
 
 function normalizeId(value) {

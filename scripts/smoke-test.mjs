@@ -67,10 +67,26 @@ async function main() {
     });
     assert(createdKey.virtualKey.key.startsWith("asg_"), "failed to auto-generate virtual key");
 
+    const createdModelPrice = await postJson(`${appBase}/api/model-prices`, {
+      model: "new-priced-model",
+      inputPricePer1MTokens: 2,
+      outputPricePer1MTokens: 4
+    });
+    assert(createdModelPrice.modelPrice.model === "new-priced-model", "failed to create model price");
+
+    const pricedResponse = await chat("new-priced-model", createdKey.virtualKey.key);
+    assert(pricedResponse.status === 200, `expected priced model request 200, got ${pricedResponse.status}`);
+
     const config = await adminFetch(`${appBase}/api/config`).then((item) => item.json());
     const extraProvider = config.providers.find((item) => item.id === "mock-extra");
     assert(extraProvider, "public config is missing new provider");
     assert(extraProvider.apiKey !== "extra-secret-key", "public config must not expose plain API key");
+    assert(config.modelPrices.some((item) => item.model === "new-priced-model"), "public config is missing new model price");
+
+    const updatedUsage = await adminFetch(`${appBase}/api/usage`).then((item) => item.json());
+    const pricedRecord = updatedUsage.records.find((item) => item.model === "new-priced-model");
+    assert(pricedRecord, "usage is missing new-priced-model record");
+    assert(pricedRecord.estimatedCostUsd === 0.006, `expected priced model cost 0.006, got ${pricedRecord.estimatedCostUsd}`);
   });
 
   await withServers("config.mock-low-budget.json", async () => {
@@ -110,15 +126,15 @@ async function withServers(sourceFile, fn) {
   }
 }
 
-function chat() {
+function chat(model = "mock-model", token = "asg_demo_local_key") {
   return fetch(`${appBase}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: "Bearer asg_demo_local_key"
+      authorization: `Bearer ${token}`
     },
     body: JSON.stringify({
-      model: "mock-model",
+      model,
       messages: [{ role: "user", content: "hello" }]
     })
   });

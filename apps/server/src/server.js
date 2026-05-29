@@ -1,7 +1,7 @@
 import http from "node:http";
 import { usageToCsv } from "./csv.js";
 import { dashboardHtml, dashboardSummary } from "./dashboard.js";
-import { addProject, addProvider, addVirtualKey, ensureDataDir, loadConfig, publicConfig, saveConfig } from "./config.js";
+import { addProject, addProvider, addVirtualKey, ensureDataDir, loadConfig, publicConfig, saveConfig, upsertModelPrice } from "./config.js";
 import { readOptionalJsonBody, sendHtml, sendJson, sendText } from "./http.js";
 import { handleChatCompletions, handleModels } from "./proxy.js";
 import { readBudgetEvents, readUsageRecords } from "./store.js";
@@ -75,6 +75,13 @@ const server = http.createServer(async (req, res) => {
       const virtualKey = addVirtualKey(config, input);
       saveConfig(config);
       return sendJson(res, 201, { virtualKey });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/model-prices") {
+      const input = await readOptionalJsonBody(req);
+      const modelPrice = upsertModelPrice(config, input);
+      saveConfig(config);
+      return sendJson(res, 201, { modelPrice });
     }
 
     if (req.method === "POST" && url.pathname === "/v1/chat/completions") {

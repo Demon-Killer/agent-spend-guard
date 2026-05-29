@@ -130,6 +130,7 @@ http://127.0.0.1:8787/api/usage.csv
 - OpenAI-compatible `/v1/models` 模型列表。
 - Virtual Key 校验。
 - Provider、Project、Virtual Key 本地配置管理。
+- 模型价格本地配置管理。
 - 每日/月度预算限制。
 - 每分钟请求数限制。
 - 用量记录 JSONL。
@@ -147,6 +148,7 @@ Dashboard 当前支持：
 - 新增 Provider。
 - 新增 Project。
 - 新增 Virtual Key。
+- 新增或覆盖模型价格。
 - 导出用量 CSV。
 
 ## 安全边界

@@ -19,7 +19,7 @@ export function dashboardHtml() {
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 28px; }
     .toolbar h2 { margin: 0; }
     .button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px 10px; color: #111827; background: #fff; text-decoration: none; font-size: 13px; }
-    .forms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .forms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
     form { display: grid; gap: 8px; }
     input, select { width: 100%; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px 9px; font-size: 13px; }
     button { border: 0; border-radius: 6px; padding: 9px 10px; background: #111827; color: #fff; font-size: 13px; cursor: pointer; }
@@ -71,6 +71,15 @@ export function dashboardHtml() {
           <select name="projectId" id="key-project"></select>
           <input name="key" placeholder="留空自动生成">
           <button type="submit">保存 Virtual Key</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>新增模型价格</h3>
+        <form id="model-price-form">
+          <input name="model" placeholder="模型 ID，例如 openai/gpt-4o-mini">
+          <input name="inputPricePer1MTokens" type="number" step="0.000001" placeholder="输入价格 USD / 1M tokens">
+          <input name="outputPricePer1MTokens" type="number" step="0.000001" placeholder="输出价格 USD / 1M tokens">
+          <button type="submit">保存模型价格</button>
         </form>
       </div>
     </section>
@@ -146,7 +155,8 @@ export function dashboardHtml() {
       const rows = [
         ...config.providers.map(p => ["Provider", p.id, p.name, p.baseUrl, p.enabled ? "enabled" : "disabled"]),
         ...config.projects.map(p => ["Project", p.id, p.name, "provider=" + p.providerId + ", daily=" + p.dailyBudgetUsd + ", rpm=" + p.maxRequestsPerMinute, p.enabled ? "enabled" : "disabled"]),
-        ...config.virtualKeys.map(k => ["Virtual Key", k.id, k.name, "project=" + k.projectId, k.enabled ? "enabled" : "disabled"])
+        ...config.virtualKeys.map(k => ["Virtual Key", k.id, k.name, "project=" + k.projectId, k.enabled ? "enabled" : "disabled"]),
+        ...(config.modelPrices || []).map(m => ["Model Price", m.model, m.model, "input=$" + m.inputPricePer1MTokens + "/1M, output=$" + m.outputPricePer1MTokens + "/1M", "active"])
       ];
       document.getElementById("config-list").innerHTML = rows.map(r =>
         "<tr><td>" + r[0] + "</td><td><code>" + r[1] + "</code></td><td>" + r[2] + "</td><td>" + r[3] + "</td><td>" + r[4] + "</td></tr>"
@@ -186,6 +196,14 @@ export function dashboardHtml() {
     document.getElementById("key-form").addEventListener("submit", (event) => {
       event.preventDefault();
       postForm(event.currentTarget, "/api/virtual-keys");
+    });
+    document.getElementById("model-price-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      postForm(event.currentTarget, "/api/model-prices", (data) => ({
+        ...data,
+        inputPricePer1MTokens: Number(data.inputPricePer1MTokens || 0),
+        outputPricePer1MTokens: Number(data.outputPricePer1MTokens || 0)
+      }));
     });
     load();
     setInterval(load, 5000);
